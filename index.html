@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mastery: Khoảng Cách Trong Không Gian - Toán 11</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script>
+        window.MathJax = {
+            tex: { 
+                inlineMath: [['$', '$'], ['\\(', '\\)']], 
+                displayMath: [['$$', '$$']],
+                processEscapes: true
+            },
+            options: { enableMenu: false },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f5f3ff; color: #0f172a; }
+        .math-render { opacity: 0; transition: opacity 0.5s ease; }
+        .math-render.ready { opacity: 1; }
+        .choice-btn:active { transform: scale(0.97); }
+        .explanation-box { 
+            border-left: 8px solid #7c3aed; 
+            background-color: #ede9fe;
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.08);
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .btn-check { box-shadow: 0 10px 20px -5px rgba(124, 58, 237, 0.4); }
+        .item-row { transition: all 0.2s ease; }
+        .item-row:hover { background-color: #ffffff; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-2 md:p-6">
+    <div id="game-app" class="w-full max-w-5xl bg-white rounded-[2.5rem] shadow-[0_40px_80px_-20px_rgba(124,58,237,0.15)] border border-violet-50 flex flex-col">
+        
+        <!-- Header -->
+        <div class="bg-violet-600 p-8 text-white text-center relative overflow-hidden rounded-t-[2.5rem]">
+            <div class="absolute inset-0 bg-gradient-to-br from-violet-800 via-violet-600 to-purple-500 opacity-95"></div>
+            <div class="relative z-10">
+                <h1 class="text-3xl font-extrabold tracking-tight text-white mb-2 italic uppercase">KHOẢNG CÁCH TRONG KHÔNG GIAN</h1>
+                <p class="text-violet-100 text-sm font-medium opacity-90 uppercase tracking-[0.3em]">Toán 11 KNTT - Cấu trúc: 50% NB - 30% TH - 20% VD</p>
+            </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div id="progress-container" class="hidden h-3 bg-slate-100 relative">
+            <div id="progress-bar" class="h-full bg-gradient-to-r from-violet-500 to-purple-400 transition-all duration-700 w-0"></div>
+        </div>
+
+        <!-- Content Area -->
+        <div id="main-content" class="p-6 md:p-12 flex-grow min-h-[600px] flex flex-col overflow-y-auto">
+            <div id="start-screen" class="text-center py-16 my-auto">
+                <div class="text-[10rem] mb-8 leading-none">📏</div>
+                <h2 class="text-4xl font-black text-slate-800 mb-6 uppercase tracking-tighter">KIỂM TRA KIẾN THỨC</h2>
+                <p class="text-slate-500 mb-12 max-w-2xl mx-auto leading-relaxed text-xl">
+                    Hệ thống đủ 50 câu hỏi chuẩn hóa chuyên đề <b>Khoảng Cách</b>. <br>
+                    Toàn bộ công thức LaTeX đã được vá lỗi hiển thị. Thuật toán phân mảnh bộ nhớ đảm bảo <b class="text-violet-600">tỷ lệ lặp lại 0%</b> với lượt đề liền trước.
+                </p>
+                <button onclick="initGame()" class="bg-violet-600 hover:bg-violet-700 text-white px-24 py-6 rounded-[2rem] font-black text-2xl shadow-xl transition-all active:scale-95 transform hover:-translate-y-1">BẮT ĐẦU NGAY</button>
+            </div>
+        </div>
+
+        <!-- Footer Control -->
+        <div id="footer-actions" class="hidden p-8 bg-slate-50 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6 rounded-b-[2.5rem]">
+            <div id="status" class="text-lg font-black text-violet-600 uppercase tracking-[0.25em]">CÂU 1 / 15</div>
+            <div class="flex gap-4 w-full md:w-auto">
+                <button id="check-btn" onclick="processAnswer()" class="flex-1 md:flex-none bg-violet-600 hover:bg-violet-700 text-white px-16 py-4 rounded-2xl font-bold text-xl transition shadow-lg btn-check active:scale-95">Kiểm tra</button>
+                <button id="next-btn" onclick="renderNext()" class="hidden flex-1 md:flex-none bg-purple-500 hover:bg-purple-600 text-white px-16 py-4 rounded-2xl font-bold text-xl transition shadow-lg active:scale-95">Tiếp theo →</button>
+                <button id="result-btn" onclick="finishGame()" class="hidden flex-1 md:flex-none bg-orange-500 hover:bg-orange-600 text-white px-16 py-4 rounded-2xl font-bold text-xl transition shadow-lg active:scale-95">Kết quả</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const MASTER_POOL = {
+            part1: [
+                { id: "kc_nb_1", question: "Khoảng cách từ điểm $M$ đến mặt phẳng $(P)$ được định nghĩa là:", options: ["Độ dài đoạn thẳng nối $M$ với một điểm bất kỳ trên $(P)$", "Độ dài đoạn thẳng $MH$, với $H$ là hình chiếu vuông góc của $M$ trên $(P)$", "Khoảng cách từ $M$ đến một đường thẳng bất kỳ nằm trong $(P)$", "Độ dài đường xiên kẻ từ $M$ đến $(P)$"], correct: 1, explanation: "Theo định nghĩa SGK: Gọi $H$ là hình chiếu vuông góc của $M$ trên mặt phẳng $(P)$. Khi đó độ dài đoạn thẳng $MH$ được gọi là khoảng cách từ điểm $M$ đến mặt phẳng $(P)$." },
+                { id: "kc_nb_2", question: "Cho đường thẳng $a$ song song với mặt phẳng $(P)$. Khoảng cách giữa $a$ và $(P)$ là:", options: ["Khoảng cách từ một điểm bất kỳ trên $a$ đến mặt phẳng $(P)$", "Khoảng cách từ một điểm bất kỳ trên $(P)$ đến đường thẳng $a$", "Độ dài một đoạn thẳng bất kỳ nối từ $a$ đến $(P)$", "Bằng 0"], correct: 0, explanation: "Định nghĩa: Khoảng cách giữa đường thẳng $a$ và mặt phẳng $(P)$ song song với $a$ là khoảng cách từ một điểm bất kỳ trên $a$ đến mặt phẳng $(P)$." },
+                { id: "kc_nb_3", question: "Khoảng cách giữa hai mặt phẳng song song $(P)$ và $(Q)$ được định nghĩa là:", options: ["Khoảng cách từ một điểm bất kỳ trên $(P)$ đến một điểm bất kỳ trên $(Q)$", "Khoảng cách từ một điểm bất kỳ thuộc $(P)$ đến mặt phẳng $(Q)$", "Độ dài đoạn giao tuyến của $(P)$ và $(Q)$", "Khoảng cách giữa hai đường thẳng bất kỳ nằm trên $(P)$ và $(Q)$"], correct: 1, explanation: "Định nghĩa: Khoảng cách giữa hai mặt phẳng song song là khoảng cách từ một điểm bất kỳ trên mặt phẳng này đến mặt phẳng kia." },
+                { id: "kc_nb_4", question: "Đường vuông góc chung của hai đường thẳng chéo nhau $a$ và $b$ là:", options: ["Đường thẳng cắt cả $a$ và $b$", "Đường thẳng vuông góc với cả $a$ và $b$", "Đường thẳng cắt và vuông góc với cả $a$ và $b$", "Đường thẳng song song với cả $a$ và $b$"], correct: 2, explanation: "Định nghĩa: Đường thẳng $c$ cắt và vuông góc với cả hai đường thẳng chéo nhau $a$ và $b$ được gọi là đường vuông góc chung của $a$ và $b$." },
+                { id: "kc_nb_5", question: "Khoảng cách giữa hai đường thẳng chéo nhau bằng:", options: ["Độ dài đoạn thẳng nối hai điểm bất kỳ trên hai đường thẳng đó", "Độ dài đoạn vuông góc chung của hai đường thẳng đó", "Khoảng cách từ một điểm trên đường thẳng này đến đường thẳng kia", "Bằng 0"], correct: 1, explanation: "Theo SGK: Khoảng cách giữa hai đường thẳng chéo nhau là độ dài đoạn vuông góc chung của hai đường thẳng đó." },
+                { id: "kc_nb_6", question: "Cho điểm $M$ và mặt phẳng $(P)$. Nếu $M$ nằm trên mặt phẳng $(P)$ thì khoảng cách $d(M, (P))$ bằng:", options: ["$1$", "Vô cực", "$0$", "Không xác định"], correct: 2, explanation: "Theo tính chất, nếu $M \\in (P)$ thì hình chiếu của $M$ trên $(P)$ là chính nó, do đó khoảng cách bằng $0$." },
+                { id: "kc_nb_7", question: "Gọi $H$ là hình chiếu vuông góc của điểm $M$ trên mặt phẳng $(P)$. Khẳng định nào sau đây ĐÚNG với mọi điểm $N \\in (P)$?", options: ["$MN \\le MH$", "$MN \\ge MH$", "$MN = MH$", "$MN &lt; MH$"], correct: 1, explanation: "Đường vuông góc luôn ngắn hơn hoặc bằng đường xiên. Do đó khoảng cách từ một điểm đến mặt phẳng là khoảng cách ngắn nhất từ điểm đó đến một điểm bất kỳ thuộc mặt phẳng: $MH \\le MN$." },
+                { id: "kc_nb_8", question: "Trong hình lăng trụ đứng, khoảng cách giữa hai mặt phẳng đáy bằng:", options: ["Độ dài đường chéo của mặt đáy", "Độ dài một cạnh bên", "Độ dài một cạnh đáy", "Khoảng cách từ tâm đáy này đến một đỉnh của đáy kia"], correct: 1, explanation: "Trong hình lăng trụ đứng, các cạnh bên vuông góc với hai mặt đáy. Do đó, độ dài cạnh bên chính là khoảng cách giữa hai mặt phẳng đáy song song." },
+                { id: "kc_nb_9", question: "Trong hình hộp chữ nhật $ABCD.A'B'C'D'$, khoảng cách giữa hai mặt phẳng $(ABCD)$ và $(A'B'C'D')$ bằng đoạn thẳng nào dưới đây?", options: ["$AC$", "$BD'$", "$AA'$", "$A'B$"], correct: 2, explanation: "Hình hộp chữ nhật có các mặt bên vuông góc với đáy, cạnh bên $AA'$ vuông góc với cả hai mặt đáy $(ABCD)$ và $(A'B'C'D')$. Vậy $d((ABCD), (A'B'C'D')) = AA'$." },
+                { id: "kc_nb_10", question: "Cho hình chóp $S.ABCD$ có cạnh bên $SA$ vuông góc với mặt phẳng đáy $(ABCD)$. Khoảng cách từ điểm $S$ đến mặt phẳng $(ABCD)$ là độ dài đoạn thẳng nào?", options: ["$SB$", "$SC$", "$SD$", "$SA$"], correct: 3, explanation: "Vì $SA \\perp (ABCD)$ nên $A$ là hình chiếu vuông góc của $S$ trên $(ABCD)$. Do đó, $d(S, (ABCD)) = SA$." },
+                { id: "kc_nb_11", question: "Cho hình chóp đều $S.ABCD$ có tâm đáy là $O$. Khoảng cách từ đỉnh $S$ đến mặt phẳng đáy $(ABCD)$ là:", options: ["$SA$", "$SB$", "$SO$", "Không xác định"], correct: 2, explanation: "Tính chất hình chóp đều: Hình chiếu vuông góc của đỉnh trùng với tâm của đa giác đáy. Vậy $SO \\perp (ABCD)$, khoảng cách là $SO$." },
+                { id: "kc_nb_12", question: "Cho đường thẳng $a$ nằm hoàn toàn trong mặt phẳng $(P)$. Khoảng cách từ đường thẳng $a$ đến mặt phẳng $(P)$ bằng:", options: ["$0$", "$1$", "Vô cực", "Tùy thuộc vào đường thẳng $a$"], correct: 0, explanation: "Vì $a \\subset (P)$ nên mọi điểm của $a$ đều thuộc $(P)$, khoảng cách từ bất kỳ điểm nào trên $a$ đến $(P)$ đều bằng $0$." },
+                { id: "kc_nb_13", question: "Nếu đường thẳng $a$ song song với đường thẳng $b$, khoảng cách giữa $a$ và $b$ được tính bằng:", options: ["Khoảng cách từ một điểm bất kỳ trên $a$ đến đường thẳng $b$", "Độ dài một đoạn thẳng bất kỳ nối $a$ và $b$", "Bằng 0", "Không có khái niệm này"], correct: 0, explanation: "Định nghĩa khoảng cách giữa 2 đường thẳng song song là khoảng cách từ 1 điểm bất kỳ trên đường thẳng này đến đường thẳng kia." },
+                { id: "kc_nb_14", question: "Cho hai điểm $A, B$ và mặt phẳng $(P)$. Nếu đường thẳng $AB$ cắt mặt phẳng $(P)$ tại điểm $I$ thì tỉ số khoảng cách $\\frac{d(A, (P))}{d(B, (P))}$ bằng:", options: ["$\\frac{AI}{AB}$", "$\\frac{BI}{AB}$", "$\\frac{AI}{BI}$", "$1$"], correct: 2, explanation: "Tính chất tỉ số khoảng cách (sử dụng định lý Thales): Nếu đường thẳng $AB$ cắt mặt phẳng $(P)$ tại $I$ thì tỉ số khoảng cách từ $A$ và $B$ đến $(P)$ bằng tỉ số $\\frac{AI}{BI}$." },
+                { id: "kc_nb_15", question: "Cho đường thẳng $AB$ song song với mặt phẳng $(P)$. Mệnh đề nào sau đây đúng về khoảng cách?", options: ["$d(A, (P)) &gt; d(B, (P))$", "$d(A, (P)) &lt; d(B, (P))$", "$d(A, (P)) = d(B, (P))$", "Tùy thuộc vào vị trí của $A$ và $B$"], correct: 2, explanation: "Vì đường thẳng $AB \\parallel (P)$ nên khoảng cách từ mọi điểm trên $AB$ đến mặt phẳng $(P)$ đều bằng nhau. Vậy $d(A, (P)) = d(B, (P))$." },
+                { id: "kc_nb_16", question: "Cho hình chóp $S.ABC$ có $SA \\perp (ABC)$. Gọi $H$ là hình chiếu vuông góc của $A$ lên $SB$. Nếu $\\Delta ABC$ vuông tại $B$ thì khoảng cách từ $A$ đến mặt phẳng $(SBC)$ là đoạn nào?", options: ["$AB$", "$AC$", "$AH$", "$SA$"], correct: 2, explanation: "Ta có $BC \\perp AB$ và $BC \\perp SA \\Rightarrow BC \\perp (SAB) \\Rightarrow BC \\perp AH$. Lại có $AH \\perp SB$. Vậy $AH \\perp (SBC)$, khoảng cách cần tìm là đoạn $AH$." },
+                { id: "kc_nb_17", question: "Gọi $G$ là trọng tâm của tam giác $ABC$. Nếu $A, B, C$ cùng nằm trên mặt phẳng $(P)$ thì khoảng cách từ $G$ đến $(P)$ bằng:", options: ["$\\frac{1}{3}$", "$0$", "$\\frac{2}{3}$", "$1$"], correct: 1, explanation: "Vì $A, B, C \\in (P)$ nên toàn bộ tam giác $ABC$ nằm hoàn toàn trong $(P)$. Do đó, trọng tâm $G$ cũng thuộc $(P)$, khoảng cách bằng $0$." },
+                { id: "kc_nb_18", question: "Cho hình lập phương $ABCD.A'B'C'D'$ cạnh $a$. Khoảng cách từ điểm $A$ đến mặt phẳng $(A'B'C'D')$ bằng:", options: ["$a\\sqrt{2}$", "$a\\sqrt{3}$", "$a$", "$\\frac{a}{2}$"], correct: 2, explanation: "Khoảng cách từ một điểm thuộc mặt đáy dưới đến mặt đáy trên chính là độ dài cạnh bên vuông góc. Vậy $d(A, (A'B'C'D')) = AA' = a$." },
+                { id: "kc_nb_19", question: "Trong hình lập phương cạnh $a$, khoảng cách giữa hai mặt phẳng bên đối diện (ví dụ mặt $(ABB'A')$ và mặt $(DCC'D')$) bằng:", options: ["$a$", "$a\\sqrt{2}$", "$a\\sqrt{3}$", "$2a$"], correct: 0, explanation: "Khoảng cách giữa hai mặt phẳng bên đối diện của hình lập phương chính là độ dài cạnh đáy vuông góc nối hai mặt phẳng đó, tức là bằng $a$." },
+                { id: "kc_nb_20", question: "Khoảng cách giữa hai đường thẳng chéo nhau $a$ và $b$ bằng khoảng cách từ đường thẳng $a$ đến:", options: ["Một đường thẳng song song với $b$", "Mặt phẳng chứa $b$ và song song với $a$", "Mặt phẳng chứa $b$ và cắt $a$", "Một điểm bất kỳ trên $b$"], correct: 1, explanation: "Tính chất (cách quy về khoảng cách từ đường đến mặt): Khoảng cách giữa hai đường thẳng chéo nhau $a, b$ bằng khoảng cách từ $a$ đến mặt phẳng $(P)$ chứa đường thẳng $b$ và song song với $a$." },
+                { id: "kc_nb_21", question: "Khoảng cách giữa hai đường thẳng chéo nhau $a$ và $b$ bằng khoảng cách giữa:", options: ["Hai mặt phẳng song song lần lượt chứa $a$ và $b$", "Hai điểm gần nhất trên $a$ và $b$", "Hai mặt phẳng vuông góc lần lượt chứa $a$ và $b$", "Trung điểm của hai đoạn thẳng nằm trên $a$ và $b$"], correct: 0, explanation: "Tính chất: Tồn tại duy nhất một cặp mặt phẳng song song lần lượt chứa $a$ và $b$. Khoảng cách giữa hai đường thẳng chéo nhau chính bằng khoảng cách giữa hai mặt phẳng song song đó." },
+                { id: "kc_nb_22", question: "Nếu hai đường thẳng $a$ và $b$ cắt nhau thì khoảng cách giữa chúng bằng:", options: ["$1$", "Độ dài đoạn thẳng nối hai điểm bất kỳ", "$0$", "Không xác định"], correct: 2, explanation: "Vì hai đường thẳng cắt nhau có chung một giao điểm, khoảng cách ngắn nhất giữa chúng chính là khoảng cách tại giao điểm đó, tức là bằng $0$." },
+                { id: "kc_nb_23", question: "Cho đường thẳng $a$ vuông góc với mặt phẳng $(P)$ tại điểm $I$. Lấy điểm $M$ thuộc đường thẳng $a$. Khoảng cách từ $M$ đến mặt phẳng $(P)$ là:", options: ["$0$", "Độ dài đoạn $MI$", "Độ dài đoạn thẳng nối $M$ với tâm của $(P)$", "Không xác định"], correct: 1, explanation: "Vì $a \\perp (P)$ tại $I$ nên $I$ chính là hình chiếu vuông góc của $M$ trên mặt phẳng $(P)$. Do đó khoảng cách $d(M, (P)) = MI$." },
+                { id: "kc_nb_24", question: "Trong tam giác vuông $ABC$ vuông tại $A$, có đường cao $AH$. Công thức nào sau đây ĐÚNG để tính độ dài $AH$?", options: ["$\\frac{1}{AH^2} = \\frac{1}{AB^2} + \\frac{1}{AC^2}$", "$AH^2 = AB^2 + AC^2$", "$AH = AB \\cdot AC$", "$\\frac{1}{AH} = \\frac{1}{AB} + \\frac{1}{AC}$"], correct: 0, explanation: "Đây là hệ thức lượng cơ bản trong tam giác vuông, một công cụ cực kỳ quan trọng và thường xuyên được sử dụng để tính khoảng cách trong không gian." },
+                { id: "kc_nb_25", question: "Cho khối chóp $S.ABC$ có thể tích $V$ và diện tích đáy $S_{ABC}$. Công thức tính khoảng cách $h$ từ đỉnh $S$ đến mặt phẳng đáy $(ABC)$ là:", options: ["$h = \\frac{V}{S_{ABC}}$", "$h = \\frac{3V}{S_{ABC}}$", "$h = \\frac{V}{3 S_{ABC}}$", "$h = 3V \\cdot S_{ABC}$"], correct: 1, explanation: "Từ công thức thể tích khối chóp $V = \\frac{1}{3} S_{ABC} \\cdot h$, ta suy ra chiều cao (cũng chính là khoảng cách từ đỉnh đến đáy) là $h = \\frac{3V}{S_{ABC}}$." }
+            ],
+            part2: [
+                {
+                    id: "kc_p2_1",
+                    question: "Cho hình lập phương $ABCD.A'B'C'D'$ cạnh $a$. Xét các mệnh đề sau về khoảng cách:",
+                    items: [
+                        { text: "Khoảng cách từ điểm $A$ đến mặt phẳng $(BCC'B')$ bằng $a$.", isTrue: true },
+                        { text: "Khoảng cách giữa hai đường thẳng $AA'$ và $CC'$ bằng $a$.", isTrue: false },
+                        { text: "Khoảng cách giữa đường thẳng $AD$ và đường thẳng $B'C'$ bằng $a\\sqrt{2}$.", isTrue: true },
+                        { text: "Khoảng cách từ điểm $B$ đến mặt phẳng $(ACC'A')$ bằng $\\frac{a\\sqrt{2}}{2}$.", isTrue: true }
+                    ],
+                    explanation: "<b>Giải thích:</b><br>a) Đúng. Do $AB \\perp (BCC'B')$ tại $B$ nên khoảng cách bằng $AB=a$.<br>b) Sai. $AA'$ và $CC'$ là hai đường thẳng song song. Khoảng cách giữa chúng là độ dài đường chéo hình vuông đáy $AC = a\\sqrt{2}$.<br>c) Đúng. Đoạn vuông góc chung của $AD$ và $B'C'$ là đường chéo mặt bên $AB' = a\\sqrt{2}$ (vì $AB' \\perp AD$ và $AB' \\perp B'C'$).<br>d) Đúng. Gọi $O$ là tâm hình vuông đáy $ABCD$. Ta có $BO \\perp AC$ và $BO \\perp AA' \\Rightarrow BO \\perp (ACC'A')$. Khoảng cách bằng $BO = \\frac{1}{2}BD = \\frac{a\\sqrt{2}}{2}$."
+                },
+                {
+                    id: "kc_p2_2",
+                    question: "Cho hình chóp $S.ABCD$ có đáy $ABCD$ là hình vuông cạnh $a$. Cạnh bên $SA \\perp (ABCD)$ và $SA=a$.",
+                    items: [
+                        { text: "Khoảng cách từ điểm $S$ đến mặt phẳng $(ABCD)$ bằng $a$.", isTrue: true },
+                        { text: "Khoảng cách từ điểm $C$ đến mặt phẳng $(SAB)$ bằng $a\\sqrt{2}$.", isTrue: false },
+                        { text: "Khoảng cách giữa hai đường thẳng chéo nhau $SA$ và $CD$ là $a$.", isTrue: true },
+                        { text: "Khoảng cách từ điểm $B$ đến mặt phẳng $(SAD)$ bằng $a$.", isTrue: true }
+                    ],
+                    explanation: "<b>Giải thích:</b><br>a) Đúng. $SA \\perp (ABCD) \\Rightarrow d(S, (ABCD)) = SA = a$.<br>b) Sai. Ta có $CB \\perp AB$ và $CB \\perp SA \\Rightarrow CB \\perp (SAB)$ tại $B$. Do đó khoảng cách từ $C$ đến $(SAB)$ chính là cạnh $CB = a$ (không phải $a\\sqrt{2}$).<br>c) Đúng. Ta có $AD \\perp SA$ và $AD \\perp CD \\Rightarrow AD$ là đoạn vuông góc chung. $AD=a$.<br>d) Đúng. Tương tự, $BA \\perp AD$ và $BA \\perp SA \\Rightarrow BA \\perp (SAD)$ tại $A$. Khoảng cách bằng $BA=a$."
+                },
+                {
+                    id: "kc_p2_3",
+                    question: "Cho hình chóp $S.ABC$ có đáy $\\Delta ABC$ là tam giác đều cạnh $a$, $SA \\perp (ABC)$ và $SA=a$.",
+                    items: [
+                        { text: "Khoảng cách từ điểm $A$ đến đường thẳng $BC$ bằng $\\frac{a\\sqrt{3}}{2}$.", isTrue: true },
+                        { text: "Khoảng cách từ điểm $S$ đến mặt phẳng $(ABC)$ bằng $a$.", isTrue: true },
+                        { text: "Gọi $M$ là trung điểm $BC$, khoảng cách từ $A$ đến mặt phẳng $(SBC)$ là độ dài đoạn $AM$.", isTrue: false },
+                        { text: "Khoảng cách từ điểm $A$ đến mặt phẳng $(SBC)$ bằng $\\frac{a\\sqrt{21}}{7}$.", isTrue: true }
+                    ],
+                    explanation: "<b>Giải thích:</b><br>a) Đúng. Khoảng cách này chính là đường cao $AM$ của tam giác đều.<br>b) Đúng. $SA \\perp$ đáy nên khoảng cách bằng $SA=a$.<br>c) Sai. Ta có $AM \\perp BC$, kẻ $AH \\perp SM \\Rightarrow AH \\perp (SBC)$. Khoảng cách là đoạn $AH$, không phải đoạn $AM$.<br>d) Đúng. Dùng hệ thức lượng trong $\\Delta SAM$ vuông tại $A$: $\\frac{1}{AH^2} = \\frac{1}{SA^2} + \\frac{1}{AM^2} = \\frac{1}{a^2} + \\frac{4}{3a^2} = \\frac{7}{3a^2} \\Rightarrow AH = \\frac{a\\sqrt{21}}{7}$."
+                },
+                {
+                    id: "kc_p2_4",
+                    question: "Cho tứ diện đều $ABCD$ cạnh $a$. Xét các tính chất về khoảng cách trong tứ diện:",
+                    items: [
+                        { text: "Chiều cao $AH$ của tứ diện (kẻ từ $A$ xuống đáy) bằng $\\frac{a\\sqrt{6}}{3}$.", isTrue: true },
+                        { text: "Hình chiếu vuông góc của $A$ lên mặt phẳng $(BCD)$ là trọng tâm của tam giác $BCD$.", isTrue: true },
+                        { text: "Khoảng cách giữa hai đường thẳng chéo nhau $AB$ và $CD$ bằng $\\frac{a\\sqrt{2}}{2}$.", isTrue: true },
+                        { text: "Khoảng cách từ đỉnh $B$ đến mặt phẳng $(ACD)$ lớn hơn khoảng cách từ đỉnh $A$ đến $(BCD)$.", isTrue: false }
+                    ],
+                    explanation: "<b>Giải thích:</b><br>a) Đúng. $H$ là trọng tâm đáy, $BH = \\frac{a\\sqrt{3}}{3}$. $AH = \\sqrt{AB^2 - BH^2} = \\sqrt{a^2 - \\frac{a^2}{3}} = \\frac{a\\sqrt{6}}{3}$.<br>b) Đúng. Đây là tính chất kinh điển của tứ diện đều.<br>c) Đúng. Đoạn vuông góc chung nối trung điểm hai cạnh đối. Độ dài bằng $\\sqrt{\\left(\\frac{a\\sqrt{3}}{2}\\right)^2 - \\left(\\frac{a}{2}\\right)^2} = \\sqrt{\\frac{3a^2}{4} - \\frac{a^2}{4}} = \\frac{a\\sqrt{2}}{2}$.<br>d) Sai. Tứ diện đều có tính đối xứng hoàn hảo, mọi đường cao kẻ từ các đỉnh đều có độ dài bằng nhau."
+                },
+                {
+                    id: "kc_p2_5",
+                    question: "Cho hình lăng trụ đều $ABC.A'B'C'$ có cạnh đáy bằng $a$, cạnh bên $AA'=a$.",
+                    items: [
+                        { text: "Khoảng cách giữa hai mặt phẳng đáy $(ABC)$ và $(A'B'C')$ bằng $a$.", isTrue: true },
+                        { text: "Khoảng cách từ điểm $A$ đến mặt phẳng $(BCC'B')$ bằng $\\frac{a\\sqrt{3}}{2}$.", isTrue: true },
+                        { text: "Khoảng cách giữa hai đường thẳng $AA'$ và $BC$ bằng $a$.", isTrue: false },
+                        { text: "Khoảng cách từ trọng tâm $G$ của $\\Delta ABC$ đến mặt phẳng $(A'B'C')$ bằng $a$.", isTrue: true }
+                    ],
+                    explanation: "<b>Giải thích:</b><br>a) Đúng. Lăng trụ đều là lăng trụ đứng, khoảng cách giữa 2 đáy là độ dài cạnh bên $AA' = a$.<br>b) Đúng. Kẻ đường cao $AM \\perp BC$ của đáy. Vì $BB' \\perp (ABC) \\Rightarrow BB' \\perp AM$. Vậy $AM \\perp (BCC'B')$. $d(A, (BCC'B')) = AM = \\frac{a\\sqrt{3}}{2}$.<br>c) Sai. Ta có $AA' \\parallel (BCC'B')$ và $BC \\subset (BCC'B')$. Khoảng cách giữa 2 đường này bằng $d(AA', (BCC'B')) = d(A, (BCC'B')) = \\frac{a\\sqrt{3}}{2}$ (không phải $a$).<br>d) Đúng. Hai mặt phẳng đáy song song cách nhau một khoảng $a$, nên khoảng cách từ bất kỳ điểm nào ở đáy này đến đáy kia cũng bằng $a$."
+                },
+                {
+                    id: "kc_p2_6",
+                    question: "Cho hình chóp $S.ABCD$ có đáy là hình vuông tâm $O$ cạnh $a$, $SA \\perp (ABCD)$ và $SA = 2a$.",
+                    items: [
+                        { text: "Khoảng cách từ $O$ đến mặt phẳng $(SCD)$ bằng một nửa khoảng cách từ $A$ đến mặt phẳng $(SCD)$.", isTrue: true },
+                        { text: "Khoảng cách từ điểm $A$ đến mặt phẳng $(SCD)$ bằng $\\frac{2a\\sqrt{5}}{5}$.", isTrue: true },
+                        { text: "Khoảng cách từ điểm $B$ đến $(SCD)$ bằng khoảng cách từ điểm $A$ đến $(SCD)$.", isTrue: true },
+                        { text: "Khoảng cách từ điểm $C$ đến mặt phẳng $(SBD)$ bằng $\\frac{a\\sqrt{2}}{2}$.", isTrue: false }
+                    ],
+                    explanation: "<b>Giải thích:</b><br>a) Đúng. Đường thẳng $AC$ cắt $(SCD)$ tại $C$, áp dụng dời điểm: $\\frac{d(O, (SCD))}{d(A, (SCD))} = \\frac{OC}{AC} = \\frac{1}{2}$.<br>b) Đúng. Kẻ $AD \\perp CD$, $AH \\perp SD \\Rightarrow AH \\perp (SCD)$. Trong $\\Delta SAD$ vuông tại $A$: $AH = \\frac{SA \\cdot AD}{\\sqrt{SA^2+AD^2}} = \\frac{2a \\cdot a}{\\sqrt{4a^2+a^2}} = \\frac{2a}{\\sqrt{5}} = \\frac{2a\\sqrt{5}}{5}$.<br>c) Đúng. Vì $AB \\parallel CD \\Rightarrow AB \\parallel (SCD)$, do đó khoảng cách từ mọi điểm trên $AB$ đến $(SCD)$ đều bằng nhau.<br>d) Sai. $d(C, (SBD)) = d(A, (SBD))$. Kẻ $AK \\perp SO \\Rightarrow AK \\perp (SBD)$. $\\frac{1}{AK^2} = \\frac{1}{4a^2} + \\frac{2}{a^2} = \\frac{9}{4a^2} \\Rightarrow AK = \\frac{2a}{3}$."
+                },
+                {
+                    id: "kc_p2_7",
+                    question: "Cho hình hộp chữ nhật $ABCD.A'B'C'D'$ có $AB=a, AD=2a, AA'=3a$. Xét các khoảng cách:",
+                    items: [
+                        { text: "Khoảng cách giữa hai mặt phẳng $(ABB'A')$ và $(DCC'D')$ bằng $2a$.", isTrue: true },
+                        { text: "Khoảng cách từ điểm $A$ đến mặt phẳng $(A'BD)$ bằng $\\frac{3a}{7}$.", isTrue: false },
+                        { text: "Khoảng cách lớn nhất giữa hai điểm bất kỳ thuộc khối hộp bằng $a\\sqrt{14}$.", isTrue: true },
+                        { text: "Khoảng cách giữa hai đường thẳng chéo nhau $AA'$ và $CD$ bằng $2a$.", isTrue: true }
+                    ],
+                    explanation: "<b>Giải thích:</b><br>a) Đúng. Khoảng cách này chính là cạnh $AD = 2a$.<br>b) Sai. Tứ diện $A.A'BD$ vuông tại $A$. Gọi $h$ là khoảng cách cần tìm: $\\frac{1}{h^2} = \\frac{1}{a^2} + \\frac{1}{4a^2} + \\frac{1}{9a^2} = \\frac{49}{36a^2} \\Rightarrow h = \\frac{6a}{7}$.<br>c) Đúng. Khoảng cách lớn nhất là đường chéo không gian: $\\sqrt{a^2+4a^2+9a^2} = \\sqrt{14a^2} = a\\sqrt{14}$.<br>d) Đúng. $AA' \\perp AD$ và $CD \\perp AD \\Rightarrow AD$ là đoạn vuông góc chung. Độ dài là $2a$."
+                },
+                {
+                    id: "kc_p2_8",
+                    question: "Xét các tính chất chung về khoảng cách trong hình học không gian:",
+                    items: [
+                        { text: "Nếu đường thẳng $a$ song song với mặt phẳng $(P)$, khoảng cách từ mọi điểm trên $a$ đến $(P)$ đều bằng nhau.", isTrue: true },
+                        { text: "Cho $A, B$ nằm ngoài $(P)$ và đường thẳng $AB$ cắt $(P)$ tại $I$. Khi đó $\\frac{d(A,(P))}{d(B,(P))} = \\frac{AI}{BI}$.", isTrue: true },
+                        { text: "Hai đường thẳng chéo nhau luôn có vô số đoạn vuông góc chung.", isTrue: false },
+                        { text: "Khoảng cách giữa hai đường thẳng chéo nhau là khoảng cách ngắn nhất giữa hai điểm bất kỳ lần lượt nằm trên hai đường thẳng đó.", isTrue: true }
+                    ],
+                    explanation: "<b>Giải thích:</b><br>a) Đúng. Đây là tính chất cơ bản của quan hệ song song.<br>b) Đúng. Dựa trên định lý Thales trong không gian (kỹ thuật dời điểm).<br>c) Sai. Hai đường thẳng chéo nhau chỉ có <b>duy nhất</b> $1$ đoạn vuông góc chung.<br>d) Đúng. Đoạn vuông góc chung mang ý nghĩa cực trị, nó là đoạn ngắn nhất nối 2 điểm trên 2 đường chéo nhau."
+                },
+                {
+                    id: "kc_p2_9",
+                    question: "Cho hình chóp $S.ABC$ có đáy là tam giác vuông tại $B$, $AB=3a, BC=4a$. Cạnh bên $SA \\perp (ABC)$ và $SA=5a$.",
+                    items: [
+                        { text: "Khoảng cách từ điểm $C$ đến mặt phẳng $(SAB)$ bằng $4a$.", isTrue: true },
+                        { text: "Khoảng cách từ điểm $A$ đến mặt phẳng $(SBC)$ bằng $\\frac{15a}{\\sqrt{34}}$.", isTrue: true },
+                        { text: "Khoảng cách từ điểm $B$ đến mặt phẳng $(SAC)$ bằng $2.4a$.", isTrue: true },
+                        { text: "Khoảng cách giữa hai đường thẳng chéo nhau $SA$ và $BC$ bằng $5a$.", isTrue: false }
+                    ],
+                    explanation: "<b>Giải thích:</b><br>a) Đúng. Ta có $CB \\perp AB$ và $CB \\perp SA \\Rightarrow CB \\perp (SAB)$. Vậy $d(C,(SAB)) = CB = 4a$.<br>b) Đúng. Kẻ $AH \\perp SB \\Rightarrow AH \\perp (SBC)$. $\\frac{1}{AH^2} = \\frac{1}{SA^2} + \\frac{1}{AB^2} = \\frac{1}{25a^2} + \\frac{1}{9a^2} = \\frac{34}{225a^2} \\Rightarrow AH = \\frac{15a}{\\sqrt{34}}$.<br>c) Đúng. Kẻ $BK \\perp AC$. Do $SA \\perp BK \\Rightarrow BK \\perp (SAC)$. Trong $\\Delta ABC$ vuông tại $B$: $BK = \\frac{AB \\cdot BC}{AC} = \\frac{3a \\cdot 4a}{5a} = 2.4a$.<br>d) Sai. Do $AB \\perp SA$ và $AB \\perp BC$ nên $AB$ chính là đoạn vuông góc chung của hai đường thẳng này. Khoảng cách là độ dài $AB = 3a$ (không phải $5a$)."
+                },
+                {
+                    id: "kc_p2_10",
+                    question: "Cho hình lập phương $ABCD.A'B'C'D'$ cạnh $a$. Gọi $O$ là tâm của hình vuông đáy $ABCD$.",
+                    items: [
+                        { text: "Khoảng cách từ tâm $O$ đến mặt phẳng $(A'B'C'D')$ bằng $a$.", isTrue: true },
+                        { text: "Khoảng cách giữa hai đường chéo $AC$ và $B'D'$ bằng $a$.", isTrue: true },
+                        { text: "Khoảng cách từ đỉnh $A'$ đến đường chéo đáy $BD$ bằng $a\\sqrt{2}$.", isTrue: false },
+                        { text: "Khoảng cách giữa hai đường thẳng $AB'$ và $CD'$ bằng $a$.", isTrue: true }
+                    ],
+                    explanation: "<b>Giải thích:</b><br>a) Đúng. Khoảng cách từ bất kỳ điểm nào trên đáy dưới đến đáy trên đều bằng chiều cao của hình lập phương là cạnh $a$.<br>b) Đúng. $AC \\subset (ABCD)$ và $B'D' \\subset (A'B'C'D')$, hai mặt phẳng này song song và cách nhau đoạn bằng $a$.<br>c) Sai. Kẻ $AO \\perp BD$. Vì $A'A \\perp BD \\Rightarrow A'O \\perp BD$. Vậy khoảng cách là $A'O$. Xét $\\Delta A'AO$ vuông tại $A$: $A'O = \\sqrt{A'A^2 + AO^2} = \\sqrt{a^2 + \\left(\\frac{a\\sqrt{2}}{2}\\right)^2} = \\frac{a\\sqrt{6}}{2}$.<br>d) Đúng. Ta có $AB' \\subset (ABB'A')$ và $CD' \\subset (DCC'D')$. Hai mặt bên này song song với nhau. Khoảng cách giữa chúng là cạnh $AD = a$."
+                },
+                {
+                    id: "kc_p2_11",
+                    question: "Cho hình chóp $S.ABC$ có đáy $ABC$ là tam giác đều cạnh $a$. Hình chiếu vuông góc của $S$ lên mặt phẳng $(ABC)$ là điểm $H$ thuộc cạnh $AB$ sao cho $AH = 2HB$. Biết $SH = a\\sqrt{3}$.",
+                    items: [
+                        { text: "Khoảng cách từ đỉnh $S$ đến mặt phẳng $(ABC)$ bằng $a\\sqrt{3}$.", isTrue: true },
+                        { text: "Khoảng cách từ điểm $C$ đến đường thẳng $AB$ bằng $\\frac{a\\sqrt{3}}{2}$.", isTrue: true },
+                        { text: "Khoảng cách từ $A$ đến mặt phẳng $(SBC)$ gấp 2 lần khoảng cách từ $H$ đến mặt phẳng $(SBC)$.", isTrue: false },
+                        { text: "Thể tích của khối chóp là $\\frac{a^3}{4}$.", isTrue: true }
+                    ],
+                    explanation: "<b>Giải thích:</b><br>a) Đúng. Hình chiếu của $S$ là $H$ nên khoảng cách là độ dài đoạn $SH = a\\sqrt{3}$.<br>b) Đúng. Khoảng cách từ $C$ đến $AB$ là đường cao của tam giác đều, bằng $\\frac{a\\sqrt{3}}{2}$.<br>c) Sai. $AH = 2HB \\Rightarrow AB = 3HB$. Đường thẳng $AH$ (chứa đoạn $AB$) cắt $(SBC)$ tại $B$. Tỉ số khoảng cách: $\\frac{d(A)}{d(H)} = \\frac{AB}{HB} = \\frac{3HB}{HB} = 3$ (gấp $3$ lần, không phải $2$).<br>d) Đúng. $V = \\frac{1}{3} S_{ABC} \\cdot h = \\frac{1}{3} \\cdot \\frac{a^2\\sqrt{3}}{4} \\cdot a\\sqrt{3} = \\frac{3a^3}{12} = \\frac{a^3}{4}$."
+                },
+                {
+                    id: "kc_p2_12",
+                    question: "Cho lăng trụ đứng tam giác $ABC.A'B'C'$ có đáy $ABC$ là tam giác vuông cân tại $A$, $AB = a$. Cạnh bên $AA' = h$.",
+                    items: [
+                        { text: "Khoảng cách từ $C$ đến mặt phẳng $(ABB'A')$ bằng $a$.", isTrue: true },
+                        { text: "Khoảng cách giữa hai đường thẳng $AA'$ và $BC$ bằng $\\frac{a\\sqrt{2}}{2}$.", isTrue: true },
+                        { text: "Khoảng cách từ điểm $A$ đến mặt phẳng $(A'BC)$ được tính bởi công thức $d = \\frac{ah}{\\sqrt{a^2+h^2}}$.", isTrue: false },
+                        { text: "Đường thẳng $B'C'$ song song với mặt phẳng $(ABC)$ và cách $(ABC)$ một khoảng bằng $h$.", isTrue: true }
+                    ],
+                    explanation: "<b>Giải thích:</b><br>a) Đúng. Đáy vuông cân tại $A \\Rightarrow AC \\perp AB$. Lăng trụ đứng $\\Rightarrow AC \\perp AA'$. Suy ra $AC \\perp (ABB'A')$. Vậy $d(C, (ABB'A')) = AC = a$.<br>b) Đúng. $AA' \\parallel (BCC'B') \\Rightarrow d(AA', BC) = d(A, (BCC'B'))$. Kẻ $AM \\perp BC$. Trong $\\Delta ABC$ vuông cân: $AM = \\frac{1}{2}BC = \\frac{a\\sqrt{2}}{2}$.<br>c) Sai. Từ $A$ kẻ đường cao $AK$ xuống đoạn $A'M$ (với $M$ là trung điểm $BC$). Khoảng cách $d = AK$. Ta có $\\frac{1}{AK^2} = \\frac{1}{AA'^2} + \\frac{1}{AM^2} = \\frac{1}{h^2} + \\frac{2}{a^2}$. Công thức đúng phải là $d = \\frac{ah}{\\sqrt{2h^2+a^2}}$.<br>d) Đúng. Cạnh $B'C'$ nằm ở đáy trên song song đáy dưới, khoảng cách là chiều cao lăng trụ $h$."
+                },
+                {
+                    id: "kc_p2_13",
+                    question: "Xét bài toán tính khoảng cách bằng phương pháp tọa độ / thể tích:",
+                    items: [
+                        { text: "Khoảng cách từ đỉnh $S$ đến $(ABC)$ có thể tính bằng công thức $h = \\frac{3V}{S_{ABC}}$.", isTrue: true },
+                        { text: "Khoảng cách giữa hai đường thẳng chéo nhau $a$ và $b$ bằng độ dài đoạn nối hai trung điểm của chúng.", isTrue: false },
+                        { text: "Nếu $(P) \\perp (Q)$ và cắt nhau theo giao tuyến $\\Delta$, khoảng cách từ một điểm $M \\in (P)$ đến $(Q)$ bằng khoảng cách từ $M$ đến $\\Delta$.", isTrue: true },
+                        { text: "Khoảng cách từ một điểm đến một đường thẳng luôn lớn hơn khoảng cách từ điểm đó đến mặt phẳng chứa đường thẳng đó.", isTrue: false }
+                    ],
+                    explanation: "<b>Giải thích:</b><br>a) Đúng. Rút ra từ công thức thể tích khối chóp $V = \\frac{1}{3} S_{ABC} \\cdot h$.<br>b) Sai. Khoảng cách là độ dài đoạn <b>vuông góc chung</b>. Đoạn nối hai trung điểm chưa chắc đã vuông góc với cả $2$ đường.<br>c) Đúng. Đây là tính chất hạ đường vuông góc từ mặt phẳng này xuống mặt phẳng kia vuông góc với nó.<br>d) Sai. Khoảng cách từ điểm $A$ đến đường thẳng $d \\subset (P)$ luôn <b>lớn hơn hoặc bằng</b> khoảng cách từ $A$ đến $(P)$. Không phải \"luôn lớn hơn\", vì nếu hình chiếu của $A$ lên $(P)$ nằm ngay trên $d$ thì hai khoảng cách này bằng nhau."
+                },
+                {
+                    id: "kc_p2_14",
+                    question: "Cho hình chóp $S.ABCD$ có đáy là hình thang vuông tại $A$ và $D$, $AB=2a, AD=DC=a$. Cạnh bên $SA \\perp (ABCD)$ và $SA=a\\sqrt{2}$.",
+                    items: [
+                        { text: "Khoảng cách từ điểm $D$ đến mặt phẳng $(SAB)$ bằng $a$.", isTrue: true },
+                        { text: "Đường thẳng $AD$ là đoạn vuông góc chung của hai đường thẳng $SA$ và $CD$.", isTrue: true },
+                        { text: "Khoảng cách từ điểm $C$ đến mặt phẳng $(SAB)$ bằng $2a$.", isTrue: false },
+                        { text: "Khoảng cách từ $C$ đến mặt phẳng $(SAD)$ bằng $a$.", isTrue: true }
+                    ],
+                    explanation: "<b>Giải thích:</b><br>a) Đúng. $DA \\perp AB$ và $DA \\perp SA \\Rightarrow DA \\perp (SAB)$. Vậy $d(D, (SAB)) = DA = a$.<br>b) Đúng. $AD \\perp SA$ (vì $SA \\perp$ đáy) và $AD \\perp CD$ (do hình thang vuông tại $D$). Vậy $AD$ là đoạn vuông góc chung.<br>c) Sai. Vì $CD \\parallel AB \\Rightarrow CD \\parallel (SAB) \\Rightarrow d(C, (SAB)) = d(D, (SAB)) = a$ (không phải $2a$).<br>d) Đúng. $CD \\perp AD$ và $CD \\perp SA \\Rightarrow CD \\perp (SAD)$. Nên khoảng cách từ $C$ đến $(SAD)$ chính là $CD = a$." 
+                },
+                {
+                    id: "kc_p2_15",
+                    question: "Tiếp tục bài toán hình chóp $S.ABCD$ đáy hình thang vuông tại $A$ và $D$ ($AB=2a, AD=DC=a$), $SA \\perp (ABCD)$ và $SA=a\\sqrt{2}$. Gọi $M$ là trung điểm của $AB$.",
+                    items: [
+                        { text: "Tứ giác $ADCM$ là một hình vuông.", isTrue: true },
+                        { text: "Tam giác $CMB$ là tam giác vuông cân tại $M$.", isTrue: true },
+                        { text: "Khoảng cách từ điểm $C$ đến mặt phẳng $(SAD)$ bằng $a$.", isTrue: true },
+                        { text: "Đường thẳng $BC$ vuông góc với mặt phẳng $(SAC)$.", isTrue: true }
+                    ],
+                    explanation: "<b>Giải thích:</b><br>a) Đúng. $M$ trung điểm $AB \\Rightarrow AM = a$. Hình thang $ADCM$ có $2$ cạnh song song bằng nhau ($AM \\parallel DC, AM=DC=a$) và góc $A=D=90^\\circ$ nên nó là hình vuông.<br>b) Đúng. Do $ADCM$ là hình vuông $\\Rightarrow CM = a$ và $CM \\perp AB$. Xét $\\Delta CMB$ có $\\widehat{CMB} = 90^\\circ$, $CM = a$, $MB = a$ nên tam giác vuông cân tại $M$.<br>c) Đúng. $CD \\perp AD$ và $CD \\perp SA \\Rightarrow CD \\perp (SAD)$. Vậy $d(C, (SAD)) = CD = a$.<br>d) Đúng. Xét trong đáy: $CM = MB = a \\Rightarrow BC = a\\sqrt{2}$. $AC$ là đường chéo hình vuông $ADCM \\Rightarrow AC = a\\sqrt{2}$. Trong $\\Delta ABC$: $AC^2 + BC^2 = 2a^2 + 2a^2 = 4a^2 = AB^2$. Vậy $\\widehat{ACB} = 90^\\circ$ tức là $BC \\perp AC$. Lại có $BC \\perp SA$, do đó $BC \\perp (SAC)$."
+                }
+            ],
+            part3: [
+                { id: "kc_p3_1_fixed", question: "Cho tứ diện $OABC$ có các cạnh $OA, OB, OC$ đôi một vuông góc với nhau tại $O$. Biết $OA=OB=OC=a$. Gọi $d$ là khoảng cách từ điểm $O$ đến mặt phẳng $(ABC)$. Biết $d = \\frac{a\\sqrt{3}}{x}$. Tìm $x$.", keywords: ["3"], explanation: "Gọi $H$ là hình chiếu của $O$ trên $(ABC)$. Trong tứ diện vuông $OABC$, ta có hệ thức: $\\frac{1}{OH^2} = \\frac{1}{OA^2} + \\frac{1}{OB^2} + \\frac{1}{OC^2} = \\frac{3}{a^2}$. <br>Suy ra $OH^2 = \\frac{a^2}{3} \\Rightarrow OH = \\frac{a}{\\sqrt{3}} = \\frac{a\\sqrt{3}}{3}$. <br>Vậy $x = 3$." },
+                { id: "kc_p3_2", question: "Cho hình lập phương $ABCD.A'B'C'D'$ có cạnh bằng $a$. Khoảng cách từ đỉnh $A$ đến mặt phẳng chéo $(A'BD)$ bằng $\\frac{a\\sqrt{3}}{x}$. Tìm giá trị của $x$.", keywords: ["3"], explanation: "Tứ diện $A.A'BD$ là một tứ diện vuông tại $A$ (vì $AA', AB, AD$ đôi một vuông góc). <br>Áp dụng hệ thức đường cao tứ diện vuông: $\\frac{1}{d^2} = \\frac{1}{AA'^2} + \\frac{1}{AB^2} + \\frac{1}{AD^2} = \\frac{1}{a^2} + \\frac{1}{a^2} + \\frac{1}{a^2} = \\frac{3}{a^2}$. <br>Suy ra $d^2 = \\frac{a^2}{3} \\Rightarrow d = \\frac{a\\sqrt{3}}{3}$. Vậy $x = 3$." },
+                { id: "kc_p3_3", question: "Cho hình chóp $S.ABCD$ có đáy $ABCD$ là hình vuông cạnh $a$. Cạnh bên $SA$ vuông góc với mặt phẳng đáy và $SA=a$. Khoảng cách từ điểm $A$ đến mặt phẳng $(SBD)$ bằng $\\frac{a\\sqrt{x}}{3}$. Tìm $x$.", keywords: ["3"], explanation: "Gọi $O$ là tâm của hình vuông đáy. $AC \\perp BD \\Rightarrow AO \\perp BD$. <br>Lại có $SA \\perp BD \\Rightarrow BD \\perp (SAO)$. Kẻ $AH \\perp SO$ tại $H \\Rightarrow AH \\perp (SBD)$. Khoảng cách là $AH$. <br>Trong $\\Delta SAO$ vuông tại $A$, $AO = \\frac{a\\sqrt{2}}{2}$, $SA=a$. <br>$\\frac{1}{AH^2} = \\frac{1}{SA^2} + \\frac{1}{AO^2} = \\frac{1}{a^2} + \\frac{2}{a^2} = \\frac{3}{a^2} \\Rightarrow AH = \\frac{a\\sqrt{3}}{3}$. Vậy $x=3$." },
+                { id: "kc_p3_4", question: "Cho hình chóp $S.ABCD$ có đáy $ABCD$ là hình vuông cạnh $a$. Cạnh bên $SA$ vuông góc với đáy và $SA = a\\sqrt{3}$. Gọi $d$ là khoảng cách từ điểm $A$ đến mặt phẳng $(SBC)$. Biết $d = \\frac{a\\sqrt{3}}{x}$. Tìm $x$.", keywords: ["2"], explanation: "Kẻ $AH \\perp SB$. Do $BC \\perp (SAB) \\Rightarrow BC \\perp AH$. Vậy $AH \\perp (SBC)$, khoảng cách là $AH$. <br>Trong $\\Delta SAB$ vuông tại $A$: $AH = \\frac{SA \\cdot AB}{\\sqrt{SA^2 + AB^2}} = \\frac{a\\sqrt{3} \\cdot a}{\\sqrt{3a^2 + a^2}} = \\frac{a^2\\sqrt{3}}{\\sqrt{4a^2}} = \\frac{a\\sqrt{3}}{2}$. <br>Vậy $x = 2$." },
+                { id: "kc_p3_5", question: "Cho hình lập phương $ABCD.A'B'C'D'$ cạnh $a$. Khoảng cách giữa hai đường thẳng chéo nhau $A'B$ và $B'C$ là $\\frac{a\\sqrt{3}}{x}$. Tìm $x$.", keywords: ["3"], explanation: "Ta có mặt phẳng $(A'BD) \\parallel (B'DC')$. $A'B \\subset (A'BD)$ và $B'C \\subset (B'DC')$. <br>Khoảng cách giữa hai đường chéo nhau bằng khoảng cách giữa hai mặt phẳng song song chứa chúng: $d(A'B, B'C) = d((A'BD), (B'DC'))$. <br>Đường chéo $AC'$ vuông góc với cả hai mặt phẳng này và chia $AC'$ thành 3 đoạn bằng nhau. $d = \\frac{AC'}{3} = \\frac{a\\sqrt{3}}{3}$. Vậy $x=3$." },
+                { id: "kc_p3_6", question: "Cho hình chóp tứ giác đều $S.ABCD$ có tất cả các cạnh đều bằng $a$. Khoảng cách từ đỉnh $S$ đến mặt phẳng đáy $(ABCD)$ là $\\frac{a\\sqrt{x}}{2}$. Tìm $x$.", keywords: ["2"], explanation: "Gọi $O$ là tâm hình vuông đáy, $SO \\perp (ABCD)$. Khoảng cách là $SO$. <br>Đáy là hình vuông cạnh $a \\Rightarrow$ đường chéo $AC = a\\sqrt{2} \\Rightarrow AO = \\frac{a\\sqrt{2}}{2}$. <br>Trong $\\Delta SAO$ vuông tại $O$: $SO = \\sqrt{SA^2 - AO^2} = \\sqrt{a^2 - \\left(\\frac{a\\sqrt{2}}{2}\\right)^2} = \\sqrt{a^2 - \\frac{a^2}{2}} = \\sqrt{\\frac{a^2}{2}} = \\frac{a\\sqrt{2}}{2}$. <br>Vậy $x=2$." },
+                { id: "kc_p3_7", question: "Cho hình chóp $S.ABCD$ có đáy là hình chữ nhật với $AB=a, AD=2a$. Cạnh bên $SA$ vuông góc với mặt phẳng đáy, $SA=a$. Khoảng cách từ điểm $B$ đến mặt phẳng $(SCD)$ bằng $\\frac{2a\\sqrt{5}}{x}$. Tìm $x$.", keywords: ["5"], explanation: "Vì $AB \\parallel CD \\Rightarrow AB \\parallel (SCD)$. Do đó $d(B, (SCD)) = d(A, (SCD))$. <br>Kẻ $AH \\perp SD$. Vì $CD \\perp (SAD) \\Rightarrow CD \\perp AH \\Rightarrow AH \\perp (SCD)$. Khoảng cách là $AH$. <br>Trong $\\Delta SAD$ vuông tại $A$: $AH = \\frac{SA \\cdot AD}{\\sqrt{SA^2+AD^2}} = \\frac{a \\cdot 2a}{\\sqrt{a^2+4a^2}} = \\frac{2a^2}{a\\sqrt{5}} = \\frac{2a}{\\sqrt{5}} = \\frac{2a\\sqrt{5}}{5}$. <br>Vậy $x=5$." },
+                { id: "kc_p3_8", question: "Cho lăng trụ đứng $ABC.A'B'C'$ có đáy $ABC$ là tam giác đều cạnh $a$. Cạnh bên $AA'=2a$. Khoảng cách từ điểm $A$ đến mặt phẳng $(A'BC)$ có dạng $\\frac{2a\\sqrt{57}}{x}$. Tìm $x$.", keywords: ["19"], explanation: "Gọi $M$ là trung điểm $BC$, kẻ $AH \\perp A'M$. <br>Tam giác đều $\\Rightarrow AM \\perp BC$. Lăng trụ đứng $\\Rightarrow AA' \\perp BC$. Suy ra $BC \\perp (A'AM) \\Rightarrow BC \\perp AH$. Vậy $AH \\perp (A'BC)$. <br>Ta có $AM = \\frac{a\\sqrt{3}}{2}$. Trong $\\Delta A'AM$ vuông tại $A$: <br>$AH = \\frac{AA' \\cdot AM}{\\sqrt{AA'^2+AM^2}} = \\frac{2a \\cdot \\frac{a\\sqrt{3}}{2}}{\\sqrt{4a^2 + \\frac{3a^2}{4}}} = \\frac{a^2\\sqrt{3}}{\\sqrt{\\frac{19a^2}{4}}} = \\frac{a^2\\sqrt{3}}{\\frac{a\\sqrt{19}}{2}} = \\frac{2a\\sqrt{3}}{\\sqrt{19}} = \\frac{2a\\sqrt{57}}{19}$. Vậy $x=19$." },
+                { id: "kc_p3_9", question: "Cho hình chóp $S.ABCD$ có đáy $ABCD$ là hình vuông cạnh $a$, cạnh bên $SA$ vuông góc với đáy và $SA = a$. Khoảng cách giữa hai đường thẳng chéo nhau $SA$ và $BC$ bằng bao nhiêu? (Ghi phần hệ số đứng trước $a$, ví dụ nếu là $2a$ thì ghi 2, nếu là $a$ thì ghi 1).", keywords: ["1"], explanation: "Ta có $SA \\perp BC$ (vì $SA \\perp (ABCD)$). <br>Và $AB \\perp BC$ (đáy là hình vuông). <br>Lại có $AB \\perp SA$ tại $A$. <br>Vậy $AB$ chính là đoạn vuông góc chung của $SA$ và $BC$. Khoảng cách bằng $AB = 1a$. Hệ số là 1." },
+                { id: "kc_p3_10", question: "Cho khối chóp $S.ABC$ có thể tích $V=10$, diện tích tam giác đáy $S_{ABC} = 5$. Tính khoảng cách $h$ từ đỉnh $S$ xuống mặt phẳng đáy $(ABC)$.", keywords: ["6"], explanation: "Sử dụng công thức tính thể tích khối chóp: $V = \\frac{1}{3} \\cdot S_{ABC} \\cdot h$. <br>Thay số: $10 = \\frac{1}{3} \\cdot 5 \\cdot h \\Rightarrow 30 = 5h \\Rightarrow h = 6$." }
+            ]
+        };
+
+        let currentSession = [];
+        let currentIndex = 0;
+        let score = 0;
+        let selectedAnswers = null;
+
+        function shuffle(array) { return array.sort(() => Math.random() - 0.5); }
+
+        function initGame() {
+            let playedHistory = [];
+            let lastRoundIds = [];
+            try {
+                playedHistory = JSON.parse(localStorage.getItem('played_history_kc_v4')) || [];
+                lastRoundIds = JSON.parse(localStorage.getItem('last_round_kc_v4')) || [];
+            } catch(e) {
+                console.error("Local storage parsing error", e);
+            }
+            
+            const getFresh = (pool, count, roundKey) => {
+                if (!pool || pool.length === 0) return [];
+                
+                // 1. Lọc ra các câu chưa chơi bao giờ VÀ không thuộc lượt ngay trước đó
+                let available = pool.filter(q => !playedHistory.includes(q.id) && !lastRoundIds.includes(q.id));
+                
+                // 2. Nếu cạn kho (available.length < count), reset lịch sử cũ, nhưng VẪN LOẠI BỎ lastRoundIds
+                if (available.length < count) {
+                    const poolIds = pool.map(p => p.id);
+                    playedHistory = playedHistory.filter(id => !poolIds.includes(id)); // Reset memory for this specific pool
+                    available = pool.filter(q => !lastRoundIds.includes(q.id)); // Refilter against last round to guarantee 0% repeat
+                }
+                
+                let selected = shuffle(available).slice(0, count);
+                
+                // 3. Fallback cực kỳ an toàn (rất hiếm khi xảy ra)
+                if (selected.length < count) {
+                    const extra = shuffle(pool.filter(q => !selected.map(s=>s.id).includes(q.id))).slice(0, count - selected.length);
+                    selected = selected.concat(extra);
+                }
+
+                playedHistory.push(...selected.map(q => q.id));
+                return selected;
+            };
+
+            const p1 = getFresh(MASTER_POOL.part1, 7, 'p1');
+            const p2 = getFresh(MASTER_POOL.part2, 5, 'p2');
+            const p3 = getFresh(MASTER_POOL.part3, 3, 'p3');
+
+            currentSession = [...p1, ...p2, ...p3];
+            
+            try {
+                localStorage.setItem('played_history_kc_v4', JSON.stringify(playedHistory));
+                localStorage.setItem('last_round_kc_v4', JSON.stringify(currentSession.map(q => q.id)));
+            } catch(e) {}
+
+            currentIndex = 0; 
+            score = 0;
+            
+            const startScreen = document.getElementById('start-screen');
+            if (startScreen) startScreen.classList.add('hidden');
+            
+            document.getElementById('progress-container').classList.remove('hidden');
+            document.getElementById('footer-actions').classList.remove('hidden');
+            renderQuestion();
+        }
+
+        function renderMath() {
+            const els = document.querySelectorAll('.math-render');
+            if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+                window.MathJax.typesetPromise().then(() => {
+                    els.forEach(el => el.classList.add('ready'));
+                }).catch((err) => {
+                    console.error("MathJax Error:", err);
+                    els.forEach(el => el.classList.add('ready'));
+                });
+            } else {
+                els.forEach(el => el.classList.add('ready'));
+            }
+        }
+
+        function renderQuestion() {
+            const container = document.getElementById('main-content');
+            if (!currentSession || currentSession.length === 0) return;
+            const data = currentSession[currentIndex];
+            const qNum = currentIndex + 1;
+            selectedAnswers = (currentIndex < 7) ? null : (currentIndex < 12 ? {} : "");
+
+            document.getElementById('status').innerText = `CÂU ${qNum} / 15`;
+            document.getElementById('progress-bar').style.width = `${(qNum / 15) * 100}%`;
+            document.getElementById('check-btn').classList.remove('hidden');
+            document.getElementById('next-btn').classList.add('hidden');
+            document.getElementById('result-btn').classList.add('hidden');
+
+            let html = `<div class="fade-in">
+                <div class="mb-10 flex items-center gap-4">
+                    <span class="bg-violet-600 text-white text-xs font-black px-5 py-2.5 rounded-2xl uppercase tracking-widest shadow-lg shadow-violet-200">PHẦN ${qNum <= 7 ? 'I: TRẮC NGHIỆM' : (qNum <= 12 ? 'II: ĐÚNG/SAI' : 'III: TRẢ LỜI NGẮN')}</span>
+                </div>
+                <div class="text-xl md:text-2xl font-bold text-slate-800 mb-12 leading-relaxed math-render" id="q-text">${data.question}</div>`;
+
+            if (currentIndex < 7 && data.options) { 
+                html += `<div class="grid gap-6">`;
+                data.options.forEach((opt, i) => {
+                    html += `<button onclick="pickMCQ(${i})" id="mcq-${i}" class="choice-btn group p-7 border-2 border-slate-100 rounded-[2rem] text-left hover:border-violet-400 hover:bg-violet-50 transition-all flex items-center gap-8">
+                        <div class="w-14 h-14 rounded-3xl bg-slate-50 flex items-center justify-center font-black text-slate-400 group-hover:text-violet-600 transition-colors text-2xl">${String.fromCharCode(65+i)}</div>
+                        <div class="text-xl font-semibold text-slate-700 math-render">${opt}</div>
+                    </button>`;
+                });
+                html += `</div>`;
+            } else if (currentIndex >= 7 && currentIndex < 12 && data.items) { 
+                html += `<div class="space-y-6">`;
+                data.items.forEach((item, i) => {
+                    html += `<div class="item-row flex flex-col md:flex-row md:items-center justify-between p-7 bg-slate-50 rounded-[2.5rem] border border-slate-100 gap-6 shadow-sm">
+                        <div class="flex items-start gap-4">
+                            <span class="font-black text-violet-500 mt-1 text-lg">${['a)', 'b)', 'c)', 'd)'][i]}</span>
+                            <span class="text-xl text-slate-700 font-bold leading-relaxed math-render">${item.text}</span>
+                        </div>
+                        <div class="flex gap-4 min-w-[260px]">
+                            <button onclick="pickTF(${i}, true)" id="tf-${i}-t" class="flex-1 py-5 rounded-[1.5rem] border-2 border-white bg-white font-black text-lg transition active:scale-90 shadow-sm text-slate-400 hover:text-violet-600">ĐÚNG</button>
+                            <button onclick="pickTF(${i}, false)" id="tf-${i}-f" class="flex-1 py-5 rounded-[1.5rem] border-2 border-white bg-white font-black text-lg transition active:scale-90 shadow-sm text-slate-400 hover:text-violet-600">SAI</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            } else { 
+                html += `<div class="relative max-w-lg mx-auto mt-12">
+                    <input type="text" id="short-ans" class="w-full p-10 border-4 border-slate-100 rounded-[3rem] text-5xl font-black text-center text-violet-600 focus:border-violet-500 outline-none transition shadow-inner" placeholder="Nhập đáp án...">
+                </div>`;
+            }
+
+            html += `<div id="exp-box" class="hidden mt-12 p-10 rounded-[3rem] explanation-box"></div></div>`;
+            container.innerHTML = html;
+            if (container.parentElement) container.parentElement.scrollTop = 0;
+            
+            renderMath();
+        }
+
+        function pickMCQ(idx) {
+            selectedAnswers = idx;
+            document.querySelectorAll('[id^="mcq-"]').forEach(b => {
+                b.classList.replace('border-violet-500', 'border-slate-100');
+                b.classList.remove('bg-violet-50');
+            });
+            document.getElementById(`mcq-${idx}`).classList.replace('border-slate-100', 'border-violet-500');
+            document.getElementById(`mcq-${idx}`).classList.add('bg-violet-50');
+        }
+
+        function pickTF(idx, val) {
+            if (typeof selectedAnswers !== 'object') selectedAnswers = {};
+            selectedAnswers[idx] = val;
+            const btnT = document.getElementById(`tf-${idx}-t`), btnF = document.getElementById(`tf-${idx}-f`);
+            btnT.className = `flex-1 py-5 rounded-[1.5rem] border-2 font-black text-lg transition active:scale-90 ${val === true ? 'bg-violet-600 text-white border-violet-600 shadow-md' : 'bg-white border-white text-slate-400'}`;
+            btnF.className = `flex-1 py-5 rounded-[1.5rem] border-2 font-black text-lg transition active:scale-90 ${val === false ? 'bg-violet-600 text-white border-violet-600 shadow-md' : 'bg-white border-white text-slate-400'}`;
+        }
+
+        function processAnswer() {
+            const data = currentSession[currentIndex];
+            let isCorrect = false;
+
+            if (currentIndex < 7) {
+                if (selectedAnswers === null) return alert("Vui lòng chọn đáp án!");
+                isCorrect = (selectedAnswers === data.correct);
+                if (isCorrect) score += 1;
+                document.getElementById(`mcq-${data.correct}`).classList.add('bg-green-50', 'border-green-500');
+                if(!isCorrect) document.getElementById(`mcq-${selectedAnswers}`).classList.add('bg-red-50', 'border-red-500');
+            } else if (currentIndex < 12) {
+                let correctCount = 0;
+                let isFullAnswered = true;
+                for(let i=0; i<4; i++) { if(selectedAnswers[i] === undefined) isFullAnswered = false; }
+                if(!isFullAnswered) return alert("Vui lòng chọn Đúng/Sai cho tất cả các ý!");
+
+                data.items.forEach((item, i) => { if (selectedAnswers[i] === item.isTrue) correctCount++; });
+                const points = [0, 0.1, 0.25, 0.5, 1];
+                score += points[correctCount];
+                isCorrect = (correctCount === 4);
+            } else {
+                const input = document.getElementById('short-ans').value.trim().toLowerCase().replace(',', '.');
+                if(!input) return alert("Vui lòng nhập đáp án!");
+                isCorrect = data.keywords.some(k => input.includes(k.toLowerCase()));
+                if (isCorrect) score += 1;
+            }
+
+            const exp = document.getElementById('exp-box');
+            exp.innerHTML = `<h4 class="text-violet-800 font-extrabold text-2xl mb-6 uppercase tracking-tighter">${isCorrect ? '✨ HOÀN TOÀN CHÍNH XÁC!' : '❌ HÃY KIỂM TRA LẠI LỜI GIẢI'}</h4>
+                             <div class="text-slate-700 font-medium leading-loose math-render text-lg" id="exp-text">${data.explanation}</div>`;
+            exp.classList.remove('hidden');
+            document.getElementById('check-btn').classList.add('hidden');
+
+            if (currentIndex === 14) document.getElementById('result-btn').classList.remove('hidden');
+            else document.getElementById('next-btn').classList.remove('hidden');
+            
+            renderMath();
+        }
+
+        function renderNext() { currentIndex++; renderQuestion(); }
+
+        function finishGame() {
+            const container = document.getElementById('main-content');
+            document.getElementById('footer-actions').classList.add('hidden');
+            document.getElementById('progress-container').classList.add('hidden');
+            
+            const finalScore = ((score / 15) * 10).toFixed(2);
+            let rank = finalScore >= 8.5 ? "XUẤT SẮC" : (finalScore >= 6.5 ? "KHÁ GIỎI" : "CẦN CỐ GẮNG");
+            
+            container.innerHTML = `<div class="text-center py-20 fade-in">
+                <div class="text-[12rem] mb-12 animate-pulse drop-shadow-2xl">🏆</div>
+                <h2 class="text-6xl font-black text-slate-800 mb-6 uppercase tracking-tighter">${rank}</h2>
+                <div class="text-[10rem] leading-none font-black text-violet-600 my-16 tracking-tighter italic">${finalScore}<span class="text-4xl text-slate-300 ml-6 not-italic">/ 10</span></div>
+                <button onclick="location.reload()" class="bg-violet-600 text-white px-24 py-8 rounded-[3rem] font-black text-3xl shadow-xl hover:bg-violet-700 transition active:scale-95 uppercase tracking-wide">LÀM ĐỀ MỚI</button>
+            </div>`;
+        }
+    </script>
+</body>
+</html>
